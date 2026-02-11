@@ -91,3 +91,24 @@ jobs:
         with:
           name: benchmark-results-runner-${{ matrix.runner_index }}
           path: ./results_runner_${{ matrix.runner_index }}/
+
+  collect-reports:
+    if: always() 
+    needs: [benchmark-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Benchmark Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-runner-*
+          path: all_results
+          merge-multiple: true # merge so no nested folders
+
+      - name: List Files (Debug)
+        run: ls -R all_results
+
+      - name: Upload Combined Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: FULL-BENCHMARK-REPORT
+          path: all_results/
