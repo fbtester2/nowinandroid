@@ -9,9 +9,6 @@ APP_PKG="com.google.samples.apps.nowinandroid.demo"
 BENCHMARK_PKG="com.google.samples.apps.nowinandroid.benchmarks"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 
-# trying the pkg internal storage instead
-INTERNAL_DIR="/data/data/${BENCHMARK_PKG}/files/test_results"
-
 PATH_APK_BASELINE="${1:-}"
 PATH_APK_CANDIDATE="${2:-}"
 OUTPUT_DIR="${3:-./macrobenchmark_results}"
@@ -28,9 +25,6 @@ install_apk() {
 
   adb shell pm clear "$APP_PKG" || true
   adb shell pm clear "${BENCHMARK_PKG}" || true
-
-  # trying making a transfer folder instead
-  adb shell "run-as ${BENCHMARK_PKG} rm -rf ./files/test_results && run-as ${BENCHMARK_PKG} mkdir -p ./files/test_results"
 }
 
 run_benchmark() {
@@ -39,9 +33,7 @@ run_benchmark() {
     -e class com.google.samples.apps.nowinandroid.startup.StartupBenchmark#startupPrecompiledWithBaselineProfile \
     -e androidx.benchmark.suppressErrors EMULATOR \
     -e androidx.benchmark.profiling.mode none \
-    -e additionalTestOutputDir "test_results" \
     -e no-isolated-storage true \
-    -e androidx.benchmark.output.relative true \
     "$BENCHMARK_PKG/$TEST_RUNNER"
 }
 
@@ -49,18 +41,30 @@ write_benchmark_result() {
   local output_path="${1}"
   mkdir -p "$(dirname "${output_path}")"
 
-  echo "Extracting results from app folder..."
+  echo "Searching for results..."
 
   BRIDGE="/data/local/tmp/bridge"
   adb shell "rm -rf ${BRIDGE} && mkdir -p ${BRIDGE} && chmod 777 ${BRIDGE}"
 
-  adb shell "run-as ${BENCHMARK_PKG} cp -R ./files/test_results/. ${BRIDGE}/" || echo "Copy failed"
+  echo "Looking in default storage locations..."
+  adb shell "su 0 cp -R /storage/emulated/0/Android/media/${BENCHMARK_PKG}/. ${BRIDGE}/ 2>/dev/null || true"
+  adb shell "su 0 cp -R /storage/emulated/0/Android/data/${BENCHMARK_PKG}/files/. ${BRIDGE}/ 2>/dev/null || true"
   
   adb pull "${BRIDGE}/." "${TEMP_DIR}/"
-  mv "${TEMP_DIR}"/*.json "${output_path}" || echo "No results found for this run"
-  
+
+  JSON_FILE=$(find "${TEMP_DIR}" -name "*.json" | head -n 1)
+  if [[ -n "$JSON_FILE" ]]; then
+    mv "$JSON_FILE" "${output_path}"
+    echo "Success: Saved to ${output_path}"
+  else
+    echo "ERROR: No results found. The benchmark likely crashed or wrote somewhere unexpected."
+    echo "Debug: Listing /sdcard/Android/media/..."
+    adb shell "su 0 ls -R /storage/emulated/0/Android/media/${BENCHMARK_PKG} 2>/dev/null"
+    exit 1
+  fi
+    
   adb shell "rm -rf ${BRIDGE}"
-  rm -f "${TEMP_DIR}/"* || true
+  rm -rf "${TEMP_DIR:?}"/*
 }
 
 if [[ -z "${PATH_APK_BASELINE}" || -z "${PATH_APK_CANDIDATE}" ]]; then
