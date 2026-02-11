@@ -10,9 +10,12 @@ BENCHMARK_PKG="com.google.samples.apps.nowinandroid.benchmarks"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 
 # to fix the permission issue I write in the internal data folder instead
-RESULT_SUBDIR="test_results"
 EMULATOR_BENCHMARK_RESULT_DIR="/data/data/${BENCHMARK_PKG}/files/${RESULT_SUBDIR}"
 TRANSFER_PATH="/data/local/tmp/benchmark_bridge"
+RESULT_SUBDIR="test_results"
+
+# trying external storage instead
+EXTERNAL_STORAGE_DIR="/sdcard/Download/benchmark_results"
 
 PATH_APK_BASELINE="${1:-}"
 PATH_APK_CANDIDATE="${2:-}"
@@ -33,7 +36,7 @@ install_apk() {
   adb shell pm clear "${BENCHMARK_PKG}" || true
 
   # trying making a transfer folder instead
-  adb shell "rm -rf ${TRANSFER_PATH} && mkdir -p ${TRANSFER_PATH} && chmod 777 ${TRANSFER_PATH}"
+  adb shell "rm -rf ${EXTERNAL_STORAGE_DIR} && mkdir -p ${EXTERNAL_STORAGE_DIR}"
 }
 
 run_benchmark() {
@@ -43,8 +46,7 @@ run_benchmark() {
     -e androidx.benchmark.suppressErrors EMULATOR \
     -e androidx.benchmark.profiling.mode none \
     -e no-isolated-storage true \
-    -e additionalTestOutputDir "${RESULT_SUBDIR}" \
-    -e androidx.benchmark.output.relative true \
+    -e additionalTestOutputDir "${EXTERNAL_STORAGE_DIR}" \
     "$BENCHMARK_PKG/$TEST_RUNNER"
 }
 
@@ -53,13 +55,13 @@ write_benchmark_result() {
   mkdir -p "$(dirname "${output_path}")"
 
   # adb pull "${EMULATOR_BENCHMARK_RESULT_DIR}/." "${TEMP_DIR}/pull_out/"
-  echo "Pulling results from internal storage..."
-  adb shell "cp ${EMULATOR_BENCHMARK_RESULT_DIR}/*.json ${TRANSFER_PATH}/" || echo "No JSON files found to bridge."
+  echo "Pulling results from external storage..."
+  # adb shell "cp ${EMULATOR_BENCHMARK_RESULT_DIR}/*.json ${TRANSFER_PATH}/" || echo "No JSON files found to bridge."
 
-  adb pull "${TRANSFER_PATH}/." "${TEMP_DIR}/"
+  adb pull "${EXTERNAL_STORAGE_DIR}/." "${TEMP_DIR}/"
   mv "${TEMP_DIR}"/*.json "${output_path}" || echo "No results found for this run"
   
-  adb shell "rm -f ${TRANSFER_PATH}/*.json"
+  adb shell "rm -f ${EXTERNAL_STORAGE_DIR}/*"
   rm -f "${TEMP_DIR}/"* || true
 }
 
