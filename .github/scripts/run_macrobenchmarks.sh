@@ -9,11 +9,6 @@ APP_PKG="com.google.samples.apps.nowinandroid.demo"
 BENCHMARK_PKG="com.google.samples.apps.nowinandroid.benchmarks"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 
-# to fix the permission issue I write in the internal data folder instead
-EMULATOR_BENCHMARK_RESULT_DIR="/data/data/${BENCHMARK_PKG}/files/${RESULT_SUBDIR}"
-TRANSFER_PATH="/data/local/tmp/benchmark_bridge"
-RESULT_SUBDIR="test_results"
-
 # trying external storage instead
 EXTERNAL_STORAGE_DIR="/sdcard/Download/benchmark_results"
 
@@ -54,9 +49,7 @@ write_benchmark_result() {
   local output_path="${1}"
   mkdir -p "$(dirname "${output_path}")"
 
-  # adb pull "${EMULATOR_BENCHMARK_RESULT_DIR}/." "${TEMP_DIR}/pull_out/"
   echo "Pulling results from external storage..."
-  # adb shell "cp ${EMULATOR_BENCHMARK_RESULT_DIR}/*.json ${TRANSFER_PATH}/" || echo "No JSON files found to bridge."
 
   adb pull "${EXTERNAL_STORAGE_DIR}/." "${TEMP_DIR}/"
   mv "${TEMP_DIR}"/*.json "${output_path}" || echo "No results found for this run"
