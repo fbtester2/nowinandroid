@@ -5,7 +5,7 @@ set -euo pipefail
 # TODO: pass number of runs as a commandline argument
 NUMBER_OF_RUNS=2
 
-APP_PKG="com.google.samples.apps.nowinandroid"
+APP_PKG="com.google.samples.apps.nowinandroid.demo"
 BENCHMARK_PKG="com.google.samples.apps.nowinandroid.benchmarks"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 EMULATOR_BENCHMARK_RESULT_DIR="/sdcard/Download"
@@ -20,7 +20,10 @@ trap 'rm -rf "${TEMP_DIR}"' EXIT
 install_apk() {
   local apk_path="${1}"
 
+  echo "Installing: ${apk_path}"
   adb install -r "${apk_path}"
+
+  sleep 2
 
   # Force-grant storage permissions to the benchmark app so it can save the JSON file
   adb shell pm grant "$BENCHMARK_PKG" android.permission.READ_EXTERNAL_STORAGE || true
@@ -40,8 +43,10 @@ run_benchmark() {
     -e androidx.benchmark.suppressErrors EMULATOR \
     -e androidx.benchmark.profiling.mode none \
     -e no-isolated-storage true \
+    -e androidx.benchmark.force_legacy_storage true \
     -e additionalTestOutputDir "${EMULATOR_BENCHMARK_RESULT_DIR}" \
     "$BENCHMARK_PKG/$TEST_RUNNER"
+    # added force_legacy_storage to prevent 'Permission Denied' on file save (Required for Nexus 4/API 28 to stop the "File Not Found" error)
 }
 
 write_benchmark_result() {

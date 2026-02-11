@@ -14,14 +14,14 @@ jobs:
         fail-fast: false # if a runner fails the other can still go on
         matrix:
           include:
-            - device: "pixel_2_high"
+            - device: "pixel"
               api: 30
-              profile: "Pixel 2"
-            - device: "nexus_6"
+              profile: "pixel"
+            - device: "Nexus 6"
               api: 29
               profile: "Nexus 6"
-            - device: "nexus_4_low" # Simulating a lower spec device (I THINK)
-              api: 26
+            - device: "Nexus 4"
+              api: 28
               profile: "Nexus 4"
     timeout-minutes: 45
 
