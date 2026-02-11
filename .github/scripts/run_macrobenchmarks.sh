@@ -22,6 +22,12 @@ install_apk() {
 
   adb install -r "${apk_path}"
 
+  # Force-grant storage permissions to the benchmark app so it can save the JSON file
+  adb shell pm grant "$BENCHMARK_PKG" android.permission.READ_EXTERNAL_STORAGE || true
+  adb shell pm grant "$BENCHMARK_PKG" android.permission.WRITE_EXTERNAL_STORAGE || true
+  adb shell pm grant "$APP_PKG" android.permission.READ_EXTERNAL_STORAGE || true
+  adb shell pm grant "$APP_PKG" android.permission.WRITE_EXTERNAL_STORAGE || true
+
   adb shell pm clear "$APP_PKG" || true
   adb shell pm clear "${BENCHMARK_PKG}" || true
   adb shell rm -rf "${EMULATOR_BENCHMARK_RESULT_DIR}" || true
