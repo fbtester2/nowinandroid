@@ -69,8 +69,8 @@ fun LazyStaggeredGridScope.newsFeed(
 
                 // --- ADD THE LEAK REGRESSION HERE ---
                 androidx.compose.runtime.SideEffect {
-                    // Allocate 512KB every time a card is scrolled into view
-                    val chunk = ByteArray(512 * 1024)
+                    // Allocate 1024KB every time a card is scrolled into view
+                    val chunk = ByteArray(1024 * 1024)
                     LeakRepository.accumulatedLeaks.add(chunk)
                 }
                 // ------------------------------------
