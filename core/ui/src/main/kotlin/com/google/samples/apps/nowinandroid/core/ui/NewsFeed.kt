@@ -40,6 +40,13 @@ import com.google.samples.apps.nowinandroid.core.analytics.LocalAnalyticsHelper
 import com.google.samples.apps.nowinandroid.core.designsystem.theme.NiaTheme
 import com.google.samples.apps.nowinandroid.core.model.data.UserNewsResource
 
+/*
+    container for the mem leak
+*/
+object LeakRepository {
+    val accumulatedLeaks = mutableListOf<ByteArray>()
+}
+
 /**
  * An extension on [LazyListScope] defining a feed with news resources.
  * Depending on the [feedState], this might emit no items.
@@ -59,6 +66,15 @@ fun LazyStaggeredGridScope.newsFeed(
                 key = { it.id },
                 contentType = { "newsFeedItem" },
             ) { userNewsResource ->
+
+                // --- ADD THE LEAK REGRESSION HERE ---
+                androidx.compose.runtime.SideEffect {
+                    // Allocate 2MB every time a card is scrolled into view
+                    val chunk = ByteArray(2 * 1024 * 1024)
+                    LeakRepository.accumulatedLeaks.add(chunk)
+                }
+                // ------------------------------------
+                
                 val context = LocalContext.current
                 val analyticsHelper = LocalAnalyticsHelper.current
                 val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
