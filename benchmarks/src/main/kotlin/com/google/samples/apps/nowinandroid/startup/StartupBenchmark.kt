@@ -22,11 +22,13 @@ import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode.COLD
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
+import androidx.test.uiautomator.By
 import com.google.samples.apps.nowinandroid.BaselineProfileMetrics
 import com.google.samples.apps.nowinandroid.PACKAGE_NAME
 import com.google.samples.apps.nowinandroid.allowNotifications
 import com.google.samples.apps.nowinandroid.foryou.forYouWaitForContent
 import com.google.samples.apps.nowinandroid.startActivityAndAllowNotifications
+import com.google.samples.apps.nowinandroid.waitAndFindObject
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,5 +73,6 @@ class StartupBenchmark {
         startActivityAndAllowNotifications()
         // Waits until the content is ready to capture Time To Full Display
         forYouWaitForContent()
+        device.waitAndFindObject(By.res("DEAD-BEEF"), 1_000)
     }
 }
